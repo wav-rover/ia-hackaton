@@ -14,7 +14,7 @@ import { generateChatReply } from "@/server/ollama";
 export const maxDuration = 60;
 
 const SIMULATED_REPLY =
-  "Ceci est une réponse simulée pour la démo. La connexion à un vrai modèle viendra plus tard.";
+  "Désolé, j'ai pris trop de temps à réfléchir… j'étais parti méditer sur l'existence des tokens. Relance ta question, je serai plus réactif cette fois — promis. (peut-être)";
 
 const createMessageSchema = z.object({
   content: z.string().trim().min(1),

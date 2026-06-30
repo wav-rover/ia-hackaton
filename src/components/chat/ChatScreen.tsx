@@ -11,7 +11,11 @@ import RotatingBackground from "@/components/background/RotatingBackground";
 import LogoTechCorpIndustries from "@/components/branding/LogoTechCorpIndustries";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProgressiveBlur } from "@/components/ui/progressive-blur";
-import { SPRING_LAYOUT } from "@/components/glass-ai-compose/constants";
+import {
+  GLASS_BLUR,
+  GLASS_PANEL,
+  SPRING_LAYOUT,
+} from "@/components/glass-ai-compose/constants";
 import {
   createConversation,
   deleteConversation,
@@ -54,8 +58,9 @@ export default function ChatScreen() {
   const [isLoadingChat, setIsLoadingChat] = useState(false);
   const hasMessages = messages.length > 0;
   const isChatView = activeChatId !== null;
-  const showWelcomeBadge = !isChatView && !hasMessages;
-  const showMessageArea = isChatView && (hasMessages || isLoadingChat);
+  const isConversationLayout = hasMessages || isChatView || isLoadingChat;
+  const showWelcomeBadge = !isConversationLayout;
+  const showMessageArea = hasMessages || isLoadingChat;
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
@@ -285,11 +290,23 @@ export default function ChatScreen() {
               />
             </div>
 
-            <div className="mt-auto hidden shrink-0 overflow-hidden rounded-xl border border-gray-500/20 bg-neutral-950 px-2.5 py-2.5 md:block">
-              <p className="text-[10px] font-medium text-white/75">Projet Hackathon IA</p>
-              <p className="mt-1 text-[10px] leading-relaxed text-white/60">
+            <div
+              className="relative isolate mt-auto hidden shrink-0 overflow-hidden rounded-xl px-2.5 py-2.5 md:block"
+              style={{
+                background: GLASS_PANEL.background,
+                border: GLASS_PANEL.border,
+                boxShadow: GLASS_PANEL.boxShadow,
+              }}
+            >
+              <div
+                className="pointer-events-none absolute inset-0 z-[-1] rounded-xl"
+                style={GLASS_BLUR}
+              />
+              <div className="absolute left-4 right-4 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+              <p className="relative text-[10px] font-medium text-white/75">Projet Hackathon IA</p>
+              <p className="relative mt-1 text-[10px] leading-relaxed text-white/60">
                 Interface chat pro pour interroger Phi-3.5-Financial, avec historique des conversations.
-                Inférence locale via Ollama — le modèle tourne chez nous, l&apos;UI reste le point d&apos;entrée.
+                Inférence locale via Ollama, le modèle tourne chez nous, l&apos;UI reste le point d&apos;entrée.
               </p>
             </div>
           </div>
@@ -344,11 +361,11 @@ export default function ChatScreen() {
         )}
 
         <motion.div
-          layout
+          layout={isConversationLayout ? "position" : false}
           transition={SPRING_LAYOUT}
           className={cn(
             "flex w-full flex-col items-center gap-3",
-            hasMessages || isChatView ? "shrink-0 pb-6" : "flex-1 justify-center",
+            isConversationLayout ? "shrink-0 pb-6" : "flex-1 justify-center",
           )}
         >
           <GlassAiCompose onSend={handleSend} />
