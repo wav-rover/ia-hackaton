@@ -8,9 +8,11 @@ const BACKGROUND_IMAGES = [
   "/images/bg-2.webp",
   "/images/bg-3.webp",
   "/images/bg-4.webp",
+  "/images/bg-5.webp",
+  "/images/bg-6.webp",
 ] as const;
 
-const ROTATION_INTERVAL_MS = 10_000;
+const ROTATION_INTERVAL_MS = 20_000;
 const CROSSFADE_DURATION_S = 3;
 const KEN_BURNS_DURATION_S = ROTATION_INTERVAL_MS / 1000;
 
