@@ -165,29 +165,30 @@ export default function GlassAiCompose({ onSend, className }: GlassAiComposeProp
                 </span>
               </div>
 
-              <GlassToolbarButton
-                size="md"
-                className="translate-x-1.5"
-                onClick={handleSend}
-                disabled={!canSend}
-                animate={{
-                  background: canSend
-                    ? modelTint("#7DD3FC", "40")
-                    : "rgba(255, 255, 255, 0.06)",
-                  border: canSend
-                    ? `1px solid ${modelTint("#7DD3FC", "66")}`
-                    : "1px solid rgba(255, 255, 255, 0.08)",
-                }}
-                whileHover={canSend && !reducedMotion ? { scale: 1.08 } : undefined}
-                whileTap={canSend && !reducedMotion ? { scale: 0.88 } : undefined}
-                transition={SPRING_SNAPPY}
-              >
-                <PaperPlaneRight
-                  size={16}
-                  weight="regular"
-                  color={canSend ? "#7DD3FC" : "rgba(255, 255, 255, 0.3)"}
-                />
-              </GlassToolbarButton>
+              <div className="translate-x-1.5">
+                <GlassToolbarButton
+                  size="md"
+                  onClick={handleSend}
+                  disabled={!canSend}
+                  animate={{
+                    background: canSend
+                      ? modelTint("#7DD3FC", "40")
+                      : "rgba(255, 255, 255, 0.06)",
+                    boxShadow: canSend
+                      ? `inset 0 0 0 1px ${modelTint("#7DD3FC", "66")}`
+                      : "inset 0 0 0 1px rgba(255, 255, 255, 0.08)",
+                  }}
+                  whileHover={canSend && !reducedMotion ? { scale: 1.08 } : undefined}
+                  whileTap={canSend && !reducedMotion ? { scale: 0.88 } : undefined}
+                  transition={SPRING_SNAPPY}
+                >
+                  <PaperPlaneRight
+                    size={16}
+                    weight="regular"
+                    color={canSend ? "#7DD3FC" : "rgba(255, 255, 255, 0.3)"}
+                  />
+                </GlassToolbarButton>
+              </div>
             </div>
           </div>
 

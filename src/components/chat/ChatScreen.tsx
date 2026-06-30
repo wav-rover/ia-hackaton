@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, ArrowUpRight } from "lucide-react";
+import { ArrowDown, ArrowUpRight, PanelLeft } from "lucide-react";
 import GlassAiCompose from "@/components/glass-ai-compose";
+import GlassChatSidebar, { MOCK_CHATS } from "@/components/chat/GlassChatSidebar";
 import Message from "@/components/chat/Message";
 import LogoTechCorpIndustries from "@/components/branding/LogoTechCorpIndustries";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -39,7 +40,11 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [showTopBlur, setShowTopBlur] = useState(false);
+  const [activeChatId, setActiveChatId] = useState<string>(MOCK_CHATS[0].id);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const hasMessages = messages.length > 0;
+  const isSidebarVisible = isDesktop || isSidebarOpen;
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
@@ -78,11 +83,30 @@ export default function ChatScreen() {
     return () => resizeObserver.disconnect();
   }, [messages, syncScrollState]);
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    const updateIsDesktop = () => setIsDesktop(mediaQuery.matches);
+
+    updateIsDesktop();
+    mediaQuery.addEventListener("change", updateIsDesktop);
+
+    return () => mediaQuery.removeEventListener("change", updateIsDesktop);
+  }, []);
+
   const handleGoHome = useCallback(() => {
     setMessages([]);
     setShowScrollButton(false);
     setShowTopBlur(false);
     isAtBottomRef.current = true;
+  }, []);
+
+  const handleNewChat = useCallback(() => {
+    handleGoHome();
+    setActiveChatId("new");
+  }, [handleGoHome]);
+
+  const handleSelectChat = useCallback((id: string) => {
+    setActiveChatId(id);
   }, []);
 
   const handleSend = useCallback((text: string, images: string[]) => {
@@ -133,6 +157,41 @@ export default function ChatScreen() {
         >
           <LogoTechCorpIndustries />
         </Link>
+
+        <button
+          type="button"
+          onClick={() => setIsSidebarOpen(true)}
+          aria-label="Ouvrir les conversations"
+          className={cn(
+            "fixed top-20 left-4 z-30 flex size-7 items-center justify-center rounded-lg border border-neutral-800 bg-neutral-950 text-white/50 transition-colors hover:bg-neutral-900 hover:text-white/75 md:hidden",
+            isSidebarOpen && "pointer-events-none opacity-0",
+          )}
+        >
+          <PanelLeft className="size-3.5" />
+        </button>
+
+        <AnimatePresence>
+          {!isDesktop && isSidebarOpen && (
+            <motion.button
+              type="button"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              aria-label="Fermer le menu"
+              onClick={() => setIsSidebarOpen(false)}
+              className="fixed inset-0 z-30 bg-black/40 md:hidden"
+            />
+          )}
+        </AnimatePresence>
+
+        <GlassChatSidebar
+          activeChatId={activeChatId}
+          onSelectChat={handleSelectChat}
+          onNewChat={handleNewChat}
+          isOpen={isSidebarVisible}
+          onClose={isDesktop ? undefined : () => setIsSidebarOpen(false)}
+        />
 
         {hasMessages && (
           <div className="relative min-h-0 flex-1">
