@@ -1,23 +1,17 @@
 "use client";
 
-import { Plus, X } from "@phosphor-icons/react";
+import { Plus, Trash, X } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SPRING_TRANSITION } from "@/components/glass-ai-compose/constants";
+import type { ConversationSummary } from "@/lib/chat-api";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
-export const MOCK_CHATS = [
-  { id: "1", title: "Analyse bilan Q4", preview: "Résumé des résultats financiers…" },
-  { id: "2", title: "Stratégie produit 2026", preview: "Roadmap et priorités…" },
-  { id: "3", title: "Rapport conformité", preview: "Points de vigilance réglementaire…" },
-  { id: "4", title: "Support client — Lot #482", preview: "Suivi des réclamations…" },
-  { id: "5", title: "Audit interne Q1", preview: "Synthèse des contrôles…" },
-  { id: "6", title: "Note de cadrage IA", preview: "Cas d'usage prioritaires…" },
-] as const;
-
 type GlassChatSidebarProps = {
-  activeChatId: string;
+  chats: ConversationSummary[];
+  activeChatId: string | null;
   onSelectChat: (id: string) => void;
+  onDeleteChat: (id: string) => void;
   onNewChat: () => void;
   isOpen?: boolean;
   onClose?: () => void;
@@ -28,28 +22,49 @@ type ChatListItemProps = {
   title: string;
   isActive: boolean;
   onSelect: () => void;
+  onDelete: () => void;
 };
 
-function ChatListItem({ title, isActive, onSelect }: ChatListItemProps) {
+function ChatListItem({ title, isActive, onSelect, onDelete }: ChatListItemProps) {
   return (
-    <button
-      type="button"
-      onClick={onSelect}
+    <div
       className={cn(
-        "w-full truncate rounded-lg px-2 py-1.5 text-left text-xs transition-colors",
-        isActive
-          ? "bg-neutral-800 text-white/90"
-          : "text-white/55 hover:bg-neutral-800/60 hover:text-white/75",
+        "group flex min-w-0 w-full items-center gap-0.5 overflow-hidden rounded-lg pr-0.5 transition-colors",
+        isActive ? "bg-neutral-800" : "hover:bg-neutral-800/60",
       )}
     >
-      {title}
-    </button>
+      <button
+        type="button"
+        onClick={onSelect}
+        title={title}
+        className={cn(
+          "min-w-0 flex-1 overflow-hidden px-2 py-1.5 text-left text-xs transition-colors",
+          isActive ? "text-white/90" : "text-white/55 group-hover:text-white/75",
+        )}
+      >
+        <span className="block truncate">{title}</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onDelete();
+        }}
+        aria-label={`Supprimer ${title}`}
+        className="flex size-6 shrink-0 items-center justify-center rounded-md text-white/30 opacity-0 transition-all hover:bg-neutral-700 hover:text-white/70 group-hover:opacity-100"
+      >
+        <Trash size={11} weight="bold" />
+      </button>
+    </div>
   );
 }
 
 export default function GlassChatSidebar({
+  chats,
   activeChatId,
   onSelectChat,
+  onDeleteChat,
   onNewChat,
   isOpen = true,
   onClose,
@@ -105,14 +120,15 @@ export default function GlassChatSidebar({
               </div>
             </div>
 
-            <ScrollArea className="h-56">
-              <div className="flex flex-col gap-0.5 px-1.5 pb-2">
-                {MOCK_CHATS.map((chat) => (
+            <ScrollArea className="h-56 w-full [&>[data-radix-scroll-area-viewport]>div]:!block [&>[data-radix-scroll-area-viewport]>div]:min-w-0">
+              <div className="flex w-full min-w-0 flex-col gap-0.5 px-1.5 pb-2">
+                {chats.map((chat) => (
                   <ChatListItem
                     key={chat.id}
                     title={chat.title}
                     isActive={activeChatId === chat.id}
                     onSelect={() => handleSelectChat(chat.id)}
+                    onDelete={() => onDeleteChat(chat.id)}
                   />
                 ))}
               </div>

@@ -5,22 +5,27 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, ArrowUpRight, PanelLeft } from "lucide-react";
 import GlassAiCompose from "@/components/glass-ai-compose";
-import GlassChatSidebar, { MOCK_CHATS } from "@/components/chat/GlassChatSidebar";
+import GlassChatSidebar from "@/components/chat/GlassChatSidebar";
 import Message from "@/components/chat/Message";
 import LogoTechCorpIndustries from "@/components/branding/LogoTechCorpIndustries";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProgressiveBlur } from "@/components/ui/progressive-blur";
 import { SPRING_LAYOUT } from "@/components/glass-ai-compose/constants";
+import {
+  createConversation,
+  deleteConversation,
+  fetchConversations,
+  fetchMessages,
+  sendMessage,
+  type ConversationSummary,
+} from "@/lib/chat-api";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/components/glass-ai-compose/types";
 
-const SIMULATED_REPLY =
-  "Ceci est une réponse simulée pour la démo. La connexion à un vrai modèle viendra plus tard.";
-const SIMULATED_REPLY_DELAY_MS = 800;
 const AT_BOTTOM_THRESHOLD_PX = 24;
 const AT_TOP_THRESHOLD_PX = 8;
 
-const createId = () => Math.random().toString(36).slice(2);
+const createPendingId = () => `pending-${Math.random().toString(36).slice(2)}`;
 
 function updateScrollMetrics(element: HTMLDivElement) {
   const { scrollTop, scrollHeight, clientHeight } = element;
@@ -38,16 +43,29 @@ function updateScrollMetrics(element: HTMLDivElement) {
 
 export default function ChatScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [showTopBlur, setShowTopBlur] = useState(false);
-  const [activeChatId, setActiveChatId] = useState<string>(MOCK_CHATS[0].id);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [isLoadingChat, setIsLoadingChat] = useState(false);
   const hasMessages = messages.length > 0;
+  const isChatView = activeChatId !== null;
+  const showWelcomeBadge = !isChatView && !hasMessages;
+  const showMessageArea = isChatView && (hasMessages || isLoadingChat);
   const isSidebarVisible = isDesktop || isSidebarOpen;
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
+  const loadRequestRef = useRef(0);
+
+  const refreshConversations = useCallback(async () => {
+    const nextConversations = await fetchConversations();
+    setConversations(nextConversations);
+    return nextConversations;
+  }, []);
 
   const syncScrollState = useCallback((element: HTMLDivElement) => {
     const metrics = updateScrollMetrics(element);
@@ -66,6 +84,12 @@ export default function ChatScreen() {
     (event) => syncScrollState(event.currentTarget),
     [syncScrollState],
   );
+
+  useEffect(() => {
+    refreshConversations().catch(() => {
+      setConversations([]);
+    });
+  }, [refreshConversations]);
 
   useEffect(() => {
     if (isAtBottomRef.current) scrollToBottom("smooth");
@@ -95,6 +119,7 @@ export default function ChatScreen() {
 
   const handleGoHome = useCallback(() => {
     setMessages([]);
+    setActiveChatId(null);
     setShowScrollButton(false);
     setShowTopBlur(false);
     isAtBottomRef.current = true;
@@ -102,43 +127,108 @@ export default function ChatScreen() {
 
   const handleNewChat = useCallback(() => {
     handleGoHome();
-    setActiveChatId("new");
   }, [handleGoHome]);
 
-  const handleSelectChat = useCallback((id: string) => {
+  const handleSelectChat = useCallback(async (id: string) => {
+    const requestId = ++loadRequestRef.current;
     setActiveChatId(id);
-  }, []);
-
-  const handleSend = useCallback((text: string, images: string[]) => {
-    const userMessage: ChatMessage = {
-      id: createId(),
-      role: "user",
-      content: text,
-      images: images.length > 0 ? images : undefined,
-    };
-    const assistantId = createId();
-    const pendingAssistant: ChatMessage = {
-      id: assistantId,
-      role: "assistant",
-      content: "",
-      isPending: true,
-    };
-
-    isAtBottomRef.current = true;
+    setMessages([]);
+    setIsLoadingChat(true);
     setShowScrollButton(false);
     setShowTopBlur(false);
-    setMessages((previous) => [...previous, userMessage, pendingAssistant]);
 
-    setTimeout(() => {
-      setMessages((previous) =>
-        previous.map((message) =>
-          message.id === assistantId
-            ? { ...message, content: SIMULATED_REPLY, isPending: false }
-            : message,
-        ),
-      );
-    }, SIMULATED_REPLY_DELAY_MS);
+    try {
+      const loadedMessages = await fetchMessages(id);
+      if (requestId !== loadRequestRef.current) return;
+      setMessages(loadedMessages);
+      isAtBottomRef.current = true;
+    } catch {
+      if (requestId !== loadRequestRef.current) return;
+      setMessages([]);
+    } finally {
+      if (requestId === loadRequestRef.current) {
+        setIsLoadingChat(false);
+      }
+    }
   }, []);
+
+  const handleDeleteChat = useCallback(
+    async (id: string) => {
+      try {
+        await deleteConversation(id);
+      } catch {
+        return;
+      }
+
+      setConversations((previous) => previous.filter((chat) => chat.id !== id));
+
+      if (activeChatId === id) {
+        loadRequestRef.current += 1;
+        handleGoHome();
+      }
+    },
+    [activeChatId, handleGoHome],
+  );
+
+  const handleSend = useCallback(
+    async (text: string, images: string[]) => {
+      if (isSending) return;
+
+      const pendingAssistantId = createPendingId();
+      const optimisticUserMessage: ChatMessage = {
+        id: createPendingId(),
+        role: "user",
+        content: text,
+        images: images.length > 0 ? images : undefined,
+      };
+      const pendingAssistant: ChatMessage = {
+        id: pendingAssistantId,
+        role: "assistant",
+        content: "",
+        isPending: true,
+      };
+
+      isAtBottomRef.current = true;
+      setShowScrollButton(false);
+      setShowTopBlur(false);
+      setMessages((previous) => [...previous, optimisticUserMessage, pendingAssistant]);
+      setIsSending(true);
+
+      try {
+        let conversationId = activeChatId;
+        if (!conversationId) {
+          const conversation = await createConversation(text);
+          conversationId = conversation.id;
+          setActiveChatId(conversationId);
+          setConversations((previous) => [conversation, ...previous]);
+        }
+
+        const savedMessages = await sendMessage(conversationId, text, images);
+
+        setMessages((previous) => {
+          const withoutOptimistic = previous.filter(
+            (message) =>
+              message.id !== optimisticUserMessage.id &&
+              message.id !== pendingAssistantId,
+          );
+          return [...withoutOptimistic, ...savedMessages];
+        });
+
+        await refreshConversations();
+      } catch {
+        setMessages((previous) =>
+          previous.filter(
+            (message) =>
+              message.id !== optimisticUserMessage.id &&
+              message.id !== pendingAssistantId,
+          ),
+        );
+      } finally {
+        setIsSending(false);
+      }
+    },
+    [activeChatId, isSending, refreshConversations],
+  );
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
@@ -186,14 +276,16 @@ export default function ChatScreen() {
         </AnimatePresence>
 
         <GlassChatSidebar
+          chats={conversations}
           activeChatId={activeChatId}
           onSelectChat={handleSelectChat}
+          onDeleteChat={handleDeleteChat}
           onNewChat={handleNewChat}
           isOpen={isSidebarVisible}
           onClose={isDesktop ? undefined : () => setIsSidebarOpen(false)}
         />
 
-        {hasMessages && (
+        {showMessageArea && (
           <div className="relative min-h-0 flex-1">
             <ScrollArea
               type="scroll"
@@ -246,13 +338,13 @@ export default function ChatScreen() {
           transition={SPRING_LAYOUT}
           className={cn(
             "flex w-full flex-col items-center gap-3",
-            hasMessages ? "shrink-0 pb-6" : "flex-1 justify-center",
+            hasMessages || isChatView ? "shrink-0 pb-6" : "flex-1 justify-center",
           )}
         >
           <GlassAiCompose onSend={handleSend} />
 
           <AnimatePresence>
-            {!hasMessages && (
+            {showWelcomeBadge && (
               <motion.div
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
