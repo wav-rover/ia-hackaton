@@ -55,7 +55,6 @@ export default function ChatScreen() {
   const isChatView = activeChatId !== null;
   const showWelcomeBadge = !isChatView && !hasMessages;
   const showMessageArea = isChatView && (hasMessages || isLoadingChat);
-  const isSidebarVisible = isDesktop || isSidebarOpen;
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const isAtBottomRef = useRef(true);
@@ -243,7 +242,7 @@ export default function ChatScreen() {
           href="/"
           onClick={handleGoHome}
           aria-label="Retour à l'accueil"
-          className="fixed left-4 top-4 z-30 flex items-center gap-2 rounded-xl border border-gray-500/10 bg-neutral-950 px-3 py-3 text-sm font-semibold text-white/90 transition-opacity hover:opacity-90"
+          className="fixed left-4 top-4 z-30 flex items-center gap-2 rounded-xl border border-gray-500/30 bg-neutral-950 px-3 py-3 text-sm font-semibold text-white/90 transition-opacity hover:opacity-90"
         >
           <LogoTechCorpIndustries />
         </Link>
@@ -275,15 +274,29 @@ export default function ChatScreen() {
           )}
         </AnimatePresence>
 
-        <GlassChatSidebar
-          chats={conversations}
-          activeChatId={activeChatId}
-          onSelectChat={handleSelectChat}
-          onDeleteChat={handleDeleteChat}
-          onNewChat={handleNewChat}
-          isOpen={isSidebarVisible}
-          onClose={isDesktop ? undefined : () => setIsSidebarOpen(false)}
-        />
+        {(isDesktop || isSidebarOpen) && (
+          <div className="fixed top-20 mt-2 bottom-4 left-4 z-40 flex w-[min(200px,calc(100vw-2rem))] flex-col gap-5 md:bottom-8">
+            <div className="min-h-0 flex-1">
+              <GlassChatSidebar
+                chats={conversations}
+                activeChatId={activeChatId}
+                onSelectChat={handleSelectChat}
+                onDeleteChat={handleDeleteChat}
+                onNewChat={handleNewChat}
+                isOpen
+                onClose={isDesktop ? undefined : () => setIsSidebarOpen(false)}
+              />
+            </div>
+
+            <div className="mt-auto hidden shrink-0 overflow-hidden rounded-xl border border-gray-500/20 bg-neutral-950 px-2.5 py-2.5 md:block">
+              <p className="text-[10px] font-medium text-white/75">Projet Hackathon IA</p>
+              <p className="mt-1 text-[10px] leading-relaxed text-white/60">
+                Interface chat pro pour interroger Phi-3.5-Financial, avec historique des conversations.
+                Inférence locale via Ollama — le modèle tourne chez nous, l&apos;UI reste le point d&apos;entrée.
+              </p>
+            </div>
+          </div>
+        )}
 
         {showMessageArea && (
           <div className="relative min-h-0 flex-1">

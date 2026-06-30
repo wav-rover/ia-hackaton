@@ -88,12 +88,9 @@ export default function GlassChatSidebar({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -8 }}
           transition={SPRING_TRANSITION}
-          className={cn(
-            "fixed top-20 mt-2 left-4 z-40 w-[min(200px,calc(100vw-2rem))]",
-            className,
-          )}
+          className={cn("flex h-full w-full flex-col", className)}
         >
-          <div className="flex flex-col overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-500/20 bg-neutral-950">
             <div className="flex shrink-0 items-center justify-between gap-1 px-2 py-2">
               <span className="text-[10px] font-medium text-white/35">Chats</span>
 
@@ -120,7 +117,7 @@ export default function GlassChatSidebar({
               </div>
             </div>
 
-            <ScrollArea className="h-56 w-full [&>[data-radix-scroll-area-viewport]>div]:!block [&>[data-radix-scroll-area-viewport]>div]:min-w-0">
+            <ScrollArea className="min-h-0 flex-1 w-full [&>[data-radix-scroll-area-viewport]>div]:!block [&>[data-radix-scroll-area-viewport]>div]:min-w-0">
               <div className="flex w-full min-w-0 flex-col gap-0.5 px-1.5 pb-2">
                 {chats.map((chat) => (
                   <ChatListItem
