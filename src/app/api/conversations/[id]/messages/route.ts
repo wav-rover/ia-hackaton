@@ -11,6 +11,8 @@ import {
 import { db } from "@/server/db";
 import { generateChatReply } from "@/server/ollama";
 
+export const maxDuration = 60;
+
 const SIMULATED_REPLY =
   "Ceci est une réponse simulée pour la démo. La connexion à un vrai modèle viendra plus tard.";
 
