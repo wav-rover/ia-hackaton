@@ -7,6 +7,7 @@ import { ArrowDown, ArrowUpRight, PanelLeft } from "lucide-react";
 import GlassAiCompose from "@/components/glass-ai-compose";
 import GlassChatSidebar from "@/components/chat/GlassChatSidebar";
 import Message from "@/components/chat/Message";
+import RotatingBackground from "@/components/background/RotatingBackground";
 import LogoTechCorpIndustries from "@/components/branding/LogoTechCorpIndustries";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProgressiveBlur } from "@/components/ui/progressive-blur";
@@ -231,11 +232,7 @@ export default function ChatScreen() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
-      <img
-        src="/images/bg.jpg"
-        alt=""
-        className="pointer-events-none fixed inset-0 blur-xl h-full w-full object-cover opacity-50"
-      />
+      <RotatingBackground />
 
       <div className="relative z-10 flex h-screen flex-col">
         <Link
