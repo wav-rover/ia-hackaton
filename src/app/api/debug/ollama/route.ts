@@ -8,11 +8,14 @@ export const maxDuration = 30;
 export async function GET() {
   const baseUrl = process.env.OLLAMA_BASE_URL?.trim().replace(/\/+$/, "");
   const model = process.env.OLLAMA_MODEL?.trim() || "phi35-financial:latest";
+  const apiKey = process.env.OLLAMA_API_KEY?.trim();
+  const authHeaders = apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
 
   const out: Record<string, unknown> = {
     env: {
       OLLAMA_BASE_URL: baseUrl ?? null,
       OLLAMA_MODEL: model,
+      hasApiKey: Boolean(apiKey),
       hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
       vercelRegion: process.env.VERCEL_REGION ?? null,
     },
@@ -26,6 +29,7 @@ export async function GET() {
   // 1) GET /api/tags  -> joignabilité simple depuis Vercel
   try {
     const res = await fetch(`${baseUrl}/api/tags`, {
+      headers: { ...authHeaders },
       signal: AbortSignal.timeout(20000),
     });
     const text = await res.text();
@@ -46,7 +50,7 @@ export async function GET() {
     const started = Date.now();
     const res = await fetch(`${baseUrl}/api/chat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       body: JSON.stringify({
         model,
         messages: [{ role: "user", content: "ping" }],
