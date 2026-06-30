@@ -113,7 +113,7 @@ export default function ChatScreen() {
       <img
         src="/images/bg.jpg"
         alt=""
-        className="pointer-events-none fixed inset-0 blur-xl h-full w-full object-cover opacity-60"
+        className="pointer-events-none fixed inset-0 blur-xl h-full w-full object-cover opacity-50"
       />
 
       <div className="relative z-10 flex h-screen flex-col">

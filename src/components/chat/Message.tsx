@@ -3,27 +3,43 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { GLASS_BLUR, GLASS_PANEL, SPRING_TRANSITION } from "@/components/glass-ai-compose/constants";
+import { DotmHex7 } from "@/components/ui/dotm-hex-7";
 import type { ChatMessage } from "@/components/glass-ai-compose/types";
+import { DotmCircular7 } from "../ui/dotm-circular-7";
 
 type MessageProps = {
   message: ChatMessage;
 };
 
-const TypingDots = () => (
-  <div className="flex items-center gap-1 py-0.5">
-    {[0, 1, 2].map((dot) => (
-      <motion.span
-        key={dot}
-        className="size-1.5 rounded-full bg-white/60"
-        animate={{ opacity: [0.3, 1, 0.3] }}
-        transition={{ duration: 1, repeat: Infinity, delay: dot * 0.18 }}
-      />
-    ))}
+const ThinkingIndicator = () => (
+  <div className="flex items-center py-0.5">
+    <DotmCircular7
+      size={20}
+      dotSize={3}
+      speed={1.2}
+      bloom
+    />
   </div>
 );
 
 export default function Message({ message }: MessageProps) {
   const isUser = message.role === "user";
+
+  if (message.isPending && !isUser) {
+    return (
+      <motion.div
+        layout
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={SPRING_TRANSITION}
+        className="flex w-full justify-start"
+      >
+        <div className="max-w-[80%] rounded-2xl rounded-bl-md px-4 py-2.5">
+          <ThinkingIndicator />
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -59,14 +75,10 @@ export default function Message({ message }: MessageProps) {
           </div>
         )}
 
-        {message.isPending ? (
-          <TypingDots />
-        ) : (
-          message.content !== "" && (
-            <p className="whitespace-pre-wrap break-words font-sans text-sm font-medium text-white/90">
-              {message.content}
-            </p>
-          )
+        {message.content !== "" && (
+          <p className="whitespace-pre-wrap break-words font-sans text-sm font-medium text-white/90">
+            {message.content}
+          </p>
         )}
       </div>
     </motion.div>
