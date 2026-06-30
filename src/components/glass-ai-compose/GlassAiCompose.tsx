@@ -161,13 +161,13 @@ export default function GlassAiCompose({ onSend, className }: GlassAiComposeProp
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11px] font-semibold text-white/70">
-                  Modèle{" "}
                   <span className="text-white/90">Phi-3.5-Financial</span>
                 </span>
               </div>
 
               <GlassToolbarButton
                 size="md"
+                className="translate-x-1.5"
                 onClick={handleSend}
                 disabled={!canSend}
                 animate={{

@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, ArrowUpRight } from "lucide-react";
 import GlassAiCompose from "@/components/glass-ai-compose";
 import Message from "@/components/chat/Message";
 import LogoTechCorpIndustries from "@/components/branding/LogoTechCorpIndustries";
@@ -77,6 +78,13 @@ export default function ChatScreen() {
     return () => resizeObserver.disconnect();
   }, [messages, syncScrollState]);
 
+  const handleGoHome = useCallback(() => {
+    setMessages([]);
+    setShowScrollButton(false);
+    setShowTopBlur(false);
+    isAtBottomRef.current = true;
+  }, []);
+
   const handleSend = useCallback((text: string, images: string[]) => {
     const userMessage: ChatMessage = {
       id: createId(),
@@ -117,11 +125,14 @@ export default function ChatScreen() {
       />
 
       <div className="relative z-10 flex h-screen flex-col">
-        <div
-          className="fixed left-4 top-4 z-30 flex items-center gap-2 rounded-lg border border-gray-500/10 bg-neutral-950 px-3 py-3 text-sm font-semibold text-white/90"
+        <Link
+          href="/"
+          onClick={handleGoHome}
+          aria-label="Retour à l'accueil"
+          className="fixed left-4 top-4 z-30 flex items-center gap-2 rounded-xl border border-gray-500/10 bg-neutral-950 px-3 py-3 text-sm font-semibold text-white/90 transition-opacity hover:opacity-90"
         >
           <LogoTechCorpIndustries />
-        </div>
+        </Link>
 
         {hasMessages && (
           <div className="relative min-h-0 flex-1">
@@ -175,11 +186,28 @@ export default function ChatScreen() {
           layout
           transition={SPRING_LAYOUT}
           className={cn(
-            "flex w-full justify-center",
-            hasMessages ? "shrink-0 pb-6" : "flex-1 items-center",
+            "flex w-full flex-col items-center gap-3",
+            hasMessages ? "shrink-0 pb-6" : "flex-1 justify-center",
           )}
         >
           <GlassAiCompose onSend={handleSend} />
+
+          <AnimatePresence>
+            {!hasMessages && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 4 }}
+                transition={{ duration: 0.2 }}
+                className="flex max-w-[420px] items-center gap-1.5 rounded-full border border-neutral-800 bg-neutral-900 px-2 py-1 text-[9px] font-medium text-white/80 shadow-[0_8px_40px_rgba(0,0,0,0.4)] md:gap-2 md:px-3 md:py-1.5 md:text-[11px]"
+              >
+                <span className="flex-1 text-center">
+                  Essayez le nouveau modèle de TechCorp Industries
+                </span>
+                <ArrowUpRight className="size-3 shrink-0 text-white/50 md:size-3.5" />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
     </div>
