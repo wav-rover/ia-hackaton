@@ -1,0 +1,24 @@
+node_modules
+.pnp
+.pnp.js
+
+# next.js
+.next/
+out/
+build/
+
+# misc
+.DS_Store
+*.pem
+*.log
+
+# env files
+.env
+.env*.local
+
+# typescript
+next-env.d.ts
+*.tsbuildinfo
+
+# generated prisma client (Prisma 7 generates into the project)
+/src/generated
