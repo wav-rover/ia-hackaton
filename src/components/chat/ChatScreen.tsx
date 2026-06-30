@@ -240,26 +240,28 @@ export default function ChatScreen() {
       <RotatingBackground />
 
       <div className="relative z-10 flex h-screen flex-col">
-        <Link
-          href="/"
-          onClick={handleGoHome}
-          aria-label="Retour à l'accueil"
-          className="fixed left-4 top-4 z-30 flex items-center gap-2 rounded-xl border border-gray-500/30 bg-neutral-950 px-3 py-3 text-sm font-semibold text-white/90 transition-opacity hover:opacity-90"
-        >
-          <LogoTechCorpIndustries />
-        </Link>
+        <div className="fixed left-4 top-4 z-30 flex items-center gap-2">
+          <Link
+            href="/"
+            onClick={handleGoHome}
+            aria-label="Retour à l'accueil"
+            className="flex items-center gap-2 rounded-xl border border-gray-500/30 bg-neutral-950 px-3 py-3 text-sm font-semibold text-white/90 transition-opacity hover:opacity-90"
+          >
+            <LogoTechCorpIndustries />
+          </Link>
 
-        <button
-          type="button"
-          onClick={() => setIsSidebarOpen(true)}
-          aria-label="Ouvrir les conversations"
-          className={cn(
-            "fixed top-20 left-4 z-30 flex size-7 items-center justify-center rounded-lg border border-neutral-800 bg-neutral-950 text-white/50 transition-colors hover:bg-neutral-900 hover:text-white/75 md:hidden",
-            isSidebarOpen && "pointer-events-none opacity-0",
-          )}
-        >
-          <PanelLeft className="size-3.5" />
-        </button>
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(true)}
+            aria-label="Ouvrir les conversations"
+            className={cn(
+              "flex items-center justify-center rounded-xl border border-gray-500/30 bg-neutral-950 px-3 py-3 text-white/50 transition-opacity hover:opacity-90 hover:text-white/75 md:hidden",
+              isSidebarOpen && "pointer-events-none opacity-0",
+            )}
+          >
+            <PanelLeft className="size-7" />
+          </button>
+        </div>
 
         <AnimatePresence>
           {!isDesktop && isSidebarOpen && (
@@ -277,7 +279,7 @@ export default function ChatScreen() {
         </AnimatePresence>
 
         {(isDesktop || isSidebarOpen) && (
-          <div className="fixed top-20 mt-2 bottom-4 left-4 z-40 flex w-[min(200px,calc(100vw-2rem))] flex-col gap-5 md:bottom-8">
+          <div className="fixed top-[4.5rem] bottom-4 left-4 z-40 flex w-[min(200px,calc(100vw-2rem))] flex-col gap-5 md:bottom-8 md:top-20 md:mt-2">
             <div className="min-h-0 flex-1">
               <GlassChatSidebar
                 chats={conversations}
@@ -361,7 +363,7 @@ export default function ChatScreen() {
         )}
 
         <motion.div
-          layout={isConversationLayout ? "position" : false}
+          layout
           transition={SPRING_LAYOUT}
           className={cn(
             "flex w-full flex-col items-center gap-3",
