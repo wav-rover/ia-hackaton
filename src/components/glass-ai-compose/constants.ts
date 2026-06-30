@@ -1,13 +1,6 @@
 export const BACKGROUND_IMAGE_URL =
   "https://ik.imagekit.io/aitoolkit/bg%20images/Ethereal%20Orange%20Flower%204%20(1).png?updatedAt=1775226802133";
 
-export const MODELS = [
-  { label: "Claude", color: "#FF7B54" },
-  { label: "ChatGPT", color: "#10A37F" },
-  { label: "Perplexity", color: "#3A86FF" },
-  { label: "Gemini", color: "#FFBE0B" },
-] as const;
-
 export const MAX_TEXTAREA_HEIGHT = 160;
 export const WEB_SEARCH_LABEL_DURATION_MS = 1000;
 

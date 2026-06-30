@@ -1,7 +1,3 @@
-import type { MODELS } from "./constants";
-
-export type Model = (typeof MODELS)[number];
-
 export type ChatRole = "user" | "assistant";
 
 export type ChatMessage = {

@@ -1,28 +1,20 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import {
-  PaperPlaneRight,
-  ImageSquare,
-  GlobeSimple,
-} from "@phosphor-icons/react";
+import { PaperPlaneRight } from "@phosphor-icons/react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { GlassToolbarButton } from "./GlassToolbarButton";
 import { ImageThumbnail } from "./ImageThumbnail";
-import { ModelSwitcher } from "./ModelSwitcher";
 import {
   ACTIVE_GLOW,
   GLASS_BLUR,
   GLASS_PANEL,
   MAX_TEXTAREA_HEIGHT,
-  MODELS,
   modelTint,
   SPRING_SNAPPY,
   SPRING_TRANSITION,
-  WEB_SEARCH_LABEL_DURATION_MS,
 } from "./constants";
 import { cn } from "@/lib/utils";
-import type { Model } from "./types";
 
 function useClickOutside<T extends HTMLElement>(
   ref: React.RefObject<T | null>,
@@ -48,23 +40,6 @@ function useClickOutside<T extends HTMLElement>(
   }, [isEnabled, onOutsideClick, ref]);
 }
 
-function useWebSearchLabel(isWebSearchEnabled: boolean) {
-  const [showLabel, setShowLabel] = useState(false);
-
-  useEffect(() => {
-    if (!isWebSearchEnabled) {
-      setShowLabel(false);
-      return;
-    }
-
-    setShowLabel(true);
-    const timer = setTimeout(() => setShowLabel(false), WEB_SEARCH_LABEL_DURATION_MS);
-    return () => clearTimeout(timer);
-  }, [isWebSearchEnabled]);
-
-  return showLabel;
-}
-
 type GlassAiComposeProps = {
   onSend?: (text: string, images: string[]) => void;
   className?: string;
@@ -73,16 +48,12 @@ type GlassAiComposeProps = {
 export default function GlassAiCompose({ onSend, className }: GlassAiComposeProps) {
   const [isActive, setIsActive] = useState(false);
   const [message, setMessage] = useState("");
-  const [activeModel, setActiveModel] = useState<Model>(MODELS[0]);
   const [images, setImages] = useState<string[]>([]);
-  const [webSearch, setWebSearch] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reducedMotion = useReducedMotion() ?? false;
-  const showWebLabel = useWebSearchLabel(webSearch);
   const canSend = message.trim().length > 0 || images.length > 0;
 
   const deactivate = useCallback(() => setIsActive(false), []);
@@ -105,24 +76,6 @@ export default function GlassAiCompose({ onSend, className }: GlassAiComposeProp
     }
   }, []);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
-
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (loadEvent) => {
-        const result = loadEvent.target?.result;
-        if (typeof result === "string") {
-          setImages((previous) => [...previous, result]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-
-    event.target.value = "";
-  };
-
   const handleSend = () => {
     if (!canSend) return;
     onSend?.(message.trim(), images);
@@ -141,9 +94,7 @@ export default function GlassAiCompose({ onSend, className }: GlassAiComposeProp
   };
 
   const transition = reducedMotion ? { duration: 0.15 } : SPRING_TRANSITION;
-  const iconHover = reducedMotion ? undefined : { scale: 1.08, background: "rgba(255, 255, 255, 0.14)" };
   const iconTap = reducedMotion ? undefined : { scale: 0.88 };
-  const mutedIconColor = "rgba(255, 255, 255, 0.5)";
 
   return (
     <div
@@ -176,11 +127,11 @@ export default function GlassAiCompose({ onSend, className }: GlassAiComposeProp
               }}
               onFocus={() => setIsActive(true)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask anything..."
+              placeholder="Écrivez votre message…"
               rows={1}
               className="w-full resize-none bg-transparent font-sans text-sm font-medium text-white/90 placeholder-white/40 outline-none"
               style={{
-                caretColor: activeModel.color,
+                caretColor: "#7DD3FC",
                 maxHeight: MAX_TEXTAREA_HEIGHT,
               }}
             />
@@ -209,67 +160,10 @@ export default function GlassAiCompose({ onSend, className }: GlassAiComposeProp
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <GlassToolbarButton
-                  onClick={() => fileInputRef.current?.click()}
-                  whileHover={iconHover}
-                  whileTap={iconTap}
-                >
-                  <ImageSquare size={16} weight="regular" color={mutedIconColor} />
-                </GlassToolbarButton>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-
-                <GlassToolbarButton
-                  onClick={() => setWebSearch((value) => !value)}
-                  whileHover={
-                    reducedMotion
-                      ? undefined
-                      : {
-                          scale: 1.08,
-                          background: webSearch
-                            ? modelTint(activeModel.color, "28")
-                            : "rgba(255, 255, 255, 0.14)",
-                        }
-                  }
-                  whileTap={iconTap}
-                  style={{
-                    background: webSearch
-                      ? modelTint(activeModel.color, "18")
-                      : "rgba(255, 255, 255, 0.08)",
-                    border: webSearch
-                      ? `1px solid ${modelTint(activeModel.color, "22")}`
-                      : "1px solid rgba(255, 255, 255, 0.12)",
-                    transition: "background 0.15s, border 0.15s",
-                  }}
-                >
-                  <GlobeSimple
-                    size={16}
-                    weight="regular"
-                    color={webSearch ? activeModel.color : mutedIconColor}
-                  />
-                </GlassToolbarButton>
-
-                <AnimatePresence>
-                  {showWebLabel && (
-                    <motion.span
-                      initial={{ opacity: 0, x: -4 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -4 }}
-                      transition={{ duration: 0.15 }}
-                      className="text-[10px] font-semibold"
-                      style={{ color: modelTint(activeModel.color, "88") }}
-                    >
-                      Web search on
-                    </motion.span>
-                  )}
-                </AnimatePresence>
+                <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11px] font-semibold text-white/70">
+                  Modèle{" "}
+                  <span className="text-white/90">Phi-3.5-Financial</span>
+                </span>
               </div>
 
               <GlassToolbarButton
@@ -278,10 +172,10 @@ export default function GlassAiCompose({ onSend, className }: GlassAiComposeProp
                 disabled={!canSend}
                 animate={{
                   background: canSend
-                    ? modelTint(activeModel.color, "40")
+                    ? modelTint("#7DD3FC", "40")
                     : "rgba(255, 255, 255, 0.06)",
                   border: canSend
-                    ? `1px solid ${modelTint(activeModel.color, "66")}`
+                    ? `1px solid ${modelTint("#7DD3FC", "66")}`
                     : "1px solid rgba(255, 255, 255, 0.08)",
                 }}
                 whileHover={canSend && !reducedMotion ? { scale: 1.08 } : undefined}
@@ -291,17 +185,13 @@ export default function GlassAiCompose({ onSend, className }: GlassAiComposeProp
                 <PaperPlaneRight
                   size={16}
                   weight="regular"
-                  color={canSend ? activeModel.color : "rgba(255, 255, 255, 0.3)"}
+                  color={canSend ? "#7DD3FC" : "rgba(255, 255, 255, 0.3)"}
                 />
               </GlassToolbarButton>
             </div>
           </div>
 
           <div className="mx-4 h-px bg-white/[0.07]" />
-
-          <div className="relative z-10 px-3 py-2.5">
-            <ModelSwitcher activeModel={activeModel} onSelect={setActiveModel} />
-          </div>
         </motion.div>
     </div>
   );

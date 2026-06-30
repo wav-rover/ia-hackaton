@@ -5,14 +5,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown } from "lucide-react";
 import GlassAiCompose from "@/components/glass-ai-compose";
 import Message from "@/components/chat/Message";
+import LogoTechCorpIndustries from "@/components/branding/LogoTechCorpIndustries";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProgressiveBlur } from "@/components/ui/progressive-blur";
-import {
-  BACKGROUND_IMAGE_URL,
-  GLASS_BLUR,
-  GLASS_PANEL,
-  SPRING_LAYOUT,
-} from "@/components/glass-ai-compose/constants";
+import { SPRING_LAYOUT } from "@/components/glass-ai-compose/constants";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/components/glass-ai-compose/types";
 
@@ -115,12 +111,18 @@ export default function ChatScreen() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       <img
-        src={BACKGROUND_IMAGE_URL}
+        src="/images/bg.jpg"
         alt=""
-        className="pointer-events-none fixed inset-0 h-full w-full object-cover opacity-60"
+        className="pointer-events-none fixed inset-0 blur-xl h-full w-full object-cover opacity-60"
       />
 
       <div className="relative z-10 flex h-screen flex-col">
+        <div
+          className="fixed left-4 top-4 z-30 flex items-center gap-2 rounded-lg border border-gray-500/10 bg-neutral-950 px-3 py-3 text-sm font-semibold text-white/90"
+        >
+          <LogoTechCorpIndustries />
+        </div>
+
         {hasMessages && (
           <div className="relative min-h-0 flex-1">
             <ScrollArea
@@ -160,14 +162,7 @@ export default function ChatScreen() {
                   transition={{ duration: 0.15 }}
                   onClick={() => scrollToBottom("smooth")}
                   aria-label="Revenir en bas"
-                  className="absolute bottom-3 left-1/2 z-20 flex size-9 -translate-x-1/2 items-center justify-center rounded-full"
-                  style={{
-                    background: GLASS_PANEL.background,
-                    border: GLASS_PANEL.border,
-                    boxShadow: GLASS_PANEL.boxShadow,
-                    backdropFilter: GLASS_BLUR.backdropFilter,
-                    WebkitBackdropFilter: GLASS_BLUR.WebkitBackdropFilter,
-                  }}
+                  className="absolute bottom-3 left-1/2 z-20 flex size-9 -translate-x-1/2 items-center justify-center rounded-full border border-white/10 bg-neutral-950 shadow-[0_8px_40px_rgba(0,0,0,0.4)]"
                 >
                   <ArrowDown className="size-4 text-white/80" />
                 </motion.button>
