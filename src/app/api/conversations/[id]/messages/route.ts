@@ -9,6 +9,7 @@ import {
   toClientMessage,
 } from "@/server/conversations";
 import { db } from "@/server/db";
+import { generateChatReply } from "@/server/ollama";
 
 const SIMULATED_REPLY =
   "Ceci est une réponse simulée pour la démo. La connexion à un vrai modèle viendra plus tard.";
@@ -89,6 +90,23 @@ export async function POST(request: Request, context: RouteContext) {
   const { content, images } = parsed.data;
   const hasImages = images && images.length > 0;
 
+  // Historique existant + nouveau message utilisateur, transmis au modèle.
+  const priorMessages = await db.message.findMany({
+    where: { conversationId: id },
+    orderBy: { createdAt: "asc" },
+    select: { role: true, content: true },
+  });
+
+  let assistantReply = SIMULATED_REPLY;
+  try {
+    assistantReply = await generateChatReply([
+      ...priorMessages,
+      { role: MessageRole.USER, content },
+    ]);
+  } catch (error) {
+    console.error("Echec de l'appel au modèle Ollama, repli sur la réponse simulée:", error);
+  }
+
   const [userMessage, assistantMessage] = await db.$transaction(async (tx) => {
     const createdUserMessage = await tx.message.create({
       data: {
@@ -109,7 +127,7 @@ export async function POST(request: Request, context: RouteContext) {
       data: {
         conversationId: id,
         role: MessageRole.ASSISTANT,
-        content: SIMULATED_REPLY,
+        content: assistantReply,
       },
       select: {
         id: true,
