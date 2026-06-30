@@ -9,7 +9,7 @@ import {
   toClientMessage,
 } from "@/server/conversations";
 import { db } from "@/server/db";
-import { generateChatReply, isOllamaConfigured } from "@/server/ollama";
+import { generateChatReply } from "@/server/ollama";
 
 export const maxDuration = 60;
 
@@ -99,20 +99,14 @@ export async function POST(request: Request, context: RouteContext) {
     select: { role: true, content: true },
   });
 
-  let assistantReply: string;
-  if (!isOllamaConfigured()) {
-    assistantReply = SIMULATED_REPLY;
-  } else {
-    try {
-      assistantReply = await generateChatReply([
-        ...priorMessages,
-        { role: MessageRole.USER, content },
-      ]);
-    } catch (error) {
-      const detail = error instanceof Error ? error.message : "erreur inconnue";
-      console.error("Echec de l'appel au modèle Ollama:", error);
-      assistantReply = `Le modèle n'a pas pu répondre (${detail}). Vérifiez OLLAMA_BASE_URL et OLLAMA_MODEL sur Vercel, puis redéployez.`;
-    }
+  let assistantReply = SIMULATED_REPLY;
+  try {
+    assistantReply = await generateChatReply([
+      ...priorMessages,
+      { role: MessageRole.USER, content },
+    ]);
+  } catch (error) {
+    console.error("Echec de l'appel au modèle Ollama, repli sur la réponse simulée:", error);
   }
 
   const [userMessage, assistantMessage] = await db.$transaction(async (tx) => {
