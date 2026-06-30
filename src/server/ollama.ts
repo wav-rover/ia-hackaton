@@ -11,11 +11,16 @@ import { MessageRole } from "@/generated/prisma/client";
  *   - OLLAMA_SYSTEM_PROMPT: (optionnel) consigne système ajoutée en tête
  */
 
-const baseUrl = process.env.OLLAMA_BASE_URL?.trim().replace(/\/+$/, "");
-const model = process.env.OLLAMA_MODEL?.trim() || "llama3.1";
-const apiKey = process.env.OLLAMA_API_KEY?.trim();
-const systemPrompt = process.env.OLLAMA_SYSTEM_PROMPT?.trim();
 const REQUEST_TIMEOUT_MS = 60_000;
+
+function getOllamaConfig() {
+  return {
+    baseUrl: process.env.OLLAMA_BASE_URL?.trim().replace(/\/+$/, "") ?? "",
+    model: process.env.OLLAMA_MODEL?.trim() ?? "",
+    apiKey: process.env.OLLAMA_API_KEY?.trim(),
+    systemPrompt: process.env.OLLAMA_SYSTEM_PROMPT?.trim(),
+  };
+}
 
 export type ChatHistoryEntry = {
   role: MessageRole;
@@ -30,10 +35,11 @@ type OllamaMessage = {
 };
 
 export function isOllamaConfigured(): boolean {
-  return Boolean(baseUrl);
+  const { baseUrl, model } = getOllamaConfig();
+  return Boolean(baseUrl && model);
 }
 
-function toOllamaMessages(history: ChatHistoryEntry[]): OllamaMessage[] {
+function toOllamaMessages(history: ChatHistoryEntry[], systemPrompt?: string): OllamaMessage[] {
   const messages: OllamaMessage[] = [];
   if (systemPrompt) {
     messages.push({ role: "system", content: systemPrompt });
@@ -71,8 +77,13 @@ function extractContent(data: unknown): string | null {
  * l'appelant décide du repli (réponse simulée).
  */
 export async function generateChatReply(history: ChatHistoryEntry[]): Promise<string> {
+  const { baseUrl, model, apiKey, systemPrompt } = getOllamaConfig();
+
   if (!baseUrl) {
     throw new Error("OLLAMA_BASE_URL non configuré");
+  }
+  if (!model) {
+    throw new Error("OLLAMA_MODEL non configuré");
   }
 
   const response = await fetch(`${baseUrl}/api/chat`, {
@@ -83,7 +94,7 @@ export async function generateChatReply(history: ChatHistoryEntry[]): Promise<st
     },
     body: JSON.stringify({
       model,
-      messages: toOllamaMessages(history),
+      messages: toOllamaMessages(history, systemPrompt),
       stream: false,
     }),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),

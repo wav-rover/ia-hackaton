@@ -22,3 +22,4 @@ next-env.d.ts
 
 # generated prisma client (Prisma 7 generates into the project)
 /src/generated
+.vercel
